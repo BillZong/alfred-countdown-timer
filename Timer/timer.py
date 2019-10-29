@@ -36,26 +36,20 @@ def main():
     interval = parse_time()
     minutes = interval / 60
     seconds = interval % 60
+    hours = interval / 3600
 
-    label = ' '.join(sys.argv[2:])
-    title = 'Timer started' + (': %s' % label.capitalize() if label else '.')
-
-    if minutes and seconds:
-        notify(title, "I'll notify you in %i:%.2i." % (minutes, seconds))
-        passed_time = '%i:%.2i have passed.' % (minutes, seconds)
-    elif minutes:
-        notify(title, "I'll notify you in %i %s." % (minutes,
-               'minute' if minutes == 1 else 'minutes'))
-        passed_time = '%i %s passed.' % (minutes,
-                      'minute has' if minutes == 1 else 'minutes have')
-    else:
-        notify(title, "I'll notify you in %i seconds." % seconds)
-        passed_time = '%i seconds have passed.' % seconds
+    content = "count down in "
+    if hours:
+        content += "%i hours," % (hours)
+    if minutes:
+        content += "%i minutes," % (minutes)
+    if not hours and seconds:
+        content += "%i seconds," % (seconds)
+    say(content)
 
     time.sleep(interval)
-    notify("Time's up" + (': %s' % label.capitalize() if label else '.'),
-           passed_time)
     play_sound('alarm.m4a')
+    say(' '.join(sys.argv[2:]))
 
 
 def parse_time():
@@ -126,28 +120,32 @@ def swizzled_bundleIdentifier(self, original):
     Original idea for this approach by Norio Numura:
         https://github.com/norio-nomura/usernotification
     """
-    # Return Alfred's bundle identifier to display the Alfred.app logo.
+    # Return Alfred's bundle identifier to display the Alfred.app logo
     if 'Alfred 2' in os.getcwd():
         return 'com.runningwithcrayons.Alfred-2'
     else:
         return 'com.alfredapp.Alfred'
 
 
-def notify(title, subtitle=None):
-    """Display a NSUserNotification on Mac OS X >= 10.8"""
-    NSUserNotification = objc.lookUpClass('NSUserNotification')
-    NSUserNotificationCenter = objc.lookUpClass('NSUserNotificationCenter')
-    if not NSUserNotification or not NSUserNotificationCenter:
-        return
+# def notify(title, subtitle=None):
+#     """Display a NSUserNotification on Mac OS X >= 10.8"""
+#     NSUserNotification = objc.lookUpClass('NSUserNotification')
+#     NSUserNotificationCenter = objc.lookUpClass('NSUserNotificationCenter')
+#     if not NSUserNotification or not NSUserNotificationCenter:
+#         print('no nsusernotification')
+#         return
 
-    notification = NSUserNotification.alloc().init()
-    notification.setTitle_(str(title))
-    if subtitle:
-        notification.setSubtitle_(str(subtitle))
+#     notification = NSUserNotification.alloc().init()
+#     notification.setTitle_(str(title))
+#     if subtitle:
+#         notification.setSubtitle_(str(subtitle))
 
-    notification_center = NSUserNotificationCenter.defaultUserNotificationCenter()
-    notification_center.deliverNotification_(notification)
+#     notification_center = NSUserNotificationCenter.defaultUserNotificationCenter()
+#     notification_center.deliverNotification_(notification)
 
+def say(content="Time's up"):
+    """Play the given content using the `say` command line utility."""
+    subprocess.Popen(['say', content])
 
 def play_sound(filename):
     """Play the given sound file using the `afplay` command line utility."""
